@@ -36,6 +36,8 @@ import org.jboss.arquillian.warp.Warp;
 import org.jboss.arquillian.warp.WarpTest;
 import org.jboss.arquillian.warp.extension.phaser.AfterPhase;
 import org.jboss.arquillian.warp.extension.phaser.BeforePhase;
+import org.jboss.arquillian.warp.extension.servlet.AfterServlet;
+import org.jboss.arquillian.warp.extension.servlet.BeforeServlet;
 import org.jboss.as.quickstarts.jsf.MyBean;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -88,7 +90,7 @@ public class PhaserBasicTest {
         Assert.assertNotNull(x.getUpdatedName());
     }
 
-    public static class InitialRequestVerification extends ServerAssertion {
+    public static class InitialRequestVerification extends LoggingAssertion {
 
         private static final long serialVersionUID = 1L;
 
@@ -101,7 +103,7 @@ public class PhaserBasicTest {
         }
     }
 
-    public static class NameChangedToX extends ServerAssertion {
+    public static class NameChangedToX extends LoggingAssertion {
 
         private static final long serialVersionUID = 1L;
 
@@ -123,6 +125,20 @@ public class PhaserBasicTest {
 
         public String getUpdatedName() {
             return updatedName;
+        }
+    }
+    
+    public static class LoggingAssertion extends ServerAssertion {
+        
+        @BeforeServlet
+        public void beforeServlet() {
+            System.out.println("before servlet");
+        }
+        
+
+        @AfterServlet
+        public void afterServlet() {
+            System.out.println("after servlet");
         }
     }
 }

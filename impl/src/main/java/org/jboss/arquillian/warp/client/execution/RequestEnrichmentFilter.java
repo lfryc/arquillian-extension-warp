@@ -19,9 +19,9 @@ package org.jboss.arquillian.warp.client.execution;
 import java.util.Arrays;
 
 import org.jboss.arquillian.warp.exception.ClientWarpExecutionException;
-import org.jboss.arquillian.warp.server.filter.WarpFilter;
 import org.jboss.arquillian.warp.shared.RequestPayload;
 import org.jboss.arquillian.warp.shared.ResponsePayload;
+import org.jboss.arquillian.warp.spi.WarpCommons;
 import org.jboss.arquillian.warp.utils.SerializationUtils;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.littleshoot.proxy.HttpRequestFilter;
@@ -30,11 +30,13 @@ public class RequestEnrichmentFilter implements HttpRequestFilter {
 
     @Override
     public void filter(HttpRequest request) {
+        System.out.println("filterRequest " + request.getUri());
         if (AssertionHolder.isWaitingForProcessing()) {
+            System.out.println("awaiting");
             try {
                 RequestPayload assertion = AssertionHolder.popRequest();
                 String requestEnrichment = SerializationUtils.serializeToBase64(assertion);
-                request.setHeader(WarpFilter.ENRICHMENT_REQUEST, Arrays.asList(requestEnrichment));
+                request.setHeader(WarpCommons.ENRICHMENT_REQUEST, Arrays.asList(requestEnrichment));
             } catch (Exception originalException) {
                 ClientWarpExecutionException wrappedException = new ClientWarpExecutionException("enriching request failed: "
                         + originalException.getMessage(), originalException);

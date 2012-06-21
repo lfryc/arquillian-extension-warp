@@ -16,12 +16,15 @@
  */
 package org.jboss.arquillian.warp.client.execution;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.jboss.arquillian.core.spi.Validate;
 import org.jboss.arquillian.warp.ServerAssertion;
-import org.jboss.arquillian.warp.shared.RequestPayload;
 import org.jboss.arquillian.warp.shared.ResponsePayload;
 
 /**
@@ -32,22 +35,30 @@ import org.jboss.arquillian.warp.shared.ResponsePayload;
  * @author Lukas Fryc
  */
 class AssertionHolder {
-    
-    private static volatile int counter = 0;
 
     private static final long WAIT_TIMEOUT_MILISECONDS = 5000;
     private static final long THREAD_SLEEP = 50;
     private static final long NUMBER_OF_WAIT_LOOPS = WAIT_TIMEOUT_MILISECONDS / THREAD_SLEEP;
 
-    private static final AtomicBoolean advertisement = new AtomicBoolean();
-    private static final AtomicReference<RequestPayload> request = new AtomicReference<RequestPayload>(null);
-    private static final AtomicReference<ResponsePayload> response = new AtomicReference<ResponsePayload>(null);
+    private static final AtomicBoolean enrichmentAdvertised = new AtomicBoolean(false);
+    private static final AtomicBoolean enrichmentFinished = new AtomicBoolean(false);
+    private static final Set<RequestEnrichment> requests = new CopyOnWriteArraySet<RequestEnrichment>();
+    private static final Set<ResponseEnrichment> responses = new CopyOnWriteArraySet<ResponseEnrichment>();
+    private static CountDownLatch responsesLatch;
 
     /**
      * Advertizes that there will be taken client action which will lead into request.
      */
     public static void advertise() {
-        advertisement.set(true);
+        enrichmentAdvertised.set(true);
+    }
+
+    public static void setExpectedRequests(int requests) {
+        responsesLatch = new CountDownLatch(requests);
+    }
+
+    public static void finished() {
+        enrichmentFinished.set(true);
     }
 
     /**
@@ -55,8 +66,8 @@ class AssertionHolder {
      * 
      * @return true if there is client action advertised, see {@link #advertise()}.
      */
-    private static boolean isAdvertised() {
-        return advertisement.get();
+    private static boolean isEnrichmentAdvertised() {
+        return enrichmentAdvertised.get();
     }
 
     /**
@@ -64,8 +75,8 @@ class AssertionHolder {
      * 
      * @return true if there is {@link ServerAssertion} pushed for current request.
      */
-    private static boolean isEnriched() {
-        return request.get() != null;
+    private static boolean isEnrichmentFinished() {
+        return enrichmentFinished.get();
     }
 
     /**
@@ -75,42 +86,32 @@ class AssertionHolder {
      * @return true if the {@link ServerAssertion} is waiting for verification or the client action which should cause request
      *         is advertised.
      */
-    static boolean isWaitingForProcessing() {
-        return isAdvertised() || isEnriched();
+    static boolean isWaitingForRequests() {
+        return isEnrichmentAdvertised();
+    }
+    
+    private static boolean isWaitingForEnriching() {
+        return isEnrichmentAdvertised() && !isEnrichmentFinished();
+    }
+
+    static boolean isWaitingForResponses() {
+        return responsesLatch.getCount() > 0L;
     }
 
     /**
      * <p>
-     * Pushes the {@link RequestPayload} to verify on the server.
+     * Pushes the {@link RequestEnrichment} to verify on the server.
      * </p>
      * 
      * <p>
      * This method cancels flag set by {@link #advertise()}.
      * 
-     * @param payload to verify on the server
+     * @param request to be verified on the server
      */
-    public static void pushRequest(RequestPayload payload) {
-        Validate.notNull(payload, "payload can't be null");
-        System.out.println("pushRequest " + ++counter);
+    public static void addRequest(RequestEnrichment request) {
+        Validate.notNull(request, "enrichment can't be null");
 
-        Object oldRequest = request.getAndSet(payload);
-        Object oldResponse = response.getAndSet(null);
-        advertisement.set(false);
-
-        assertNull(oldRequest, "request must be cleared after last successful request");
-        assertNull(oldResponse, "response must be cleared after last successful request");
-    }
-
-    private static final void assertNull(Object object, String message) {
-        if (object != null) {
-            throw new IllegalStateException(message);
-        }
-    }
-
-    private static final void assertNotNull(Object object, String message) {
-        if (object == null) {
-            throw new IllegalStateException(message);
-        }
+        requests.add(request);
     }
 
     /**
@@ -119,16 +120,11 @@ class AssertionHolder {
      * @return the associated {@link ServerAssertion}
      * @throws SettingRequestTimeoutException when {@link ServerAssertion} isn't setup in time
      */
-    static RequestPayload popRequest() {
-        System.out.println("popRequest");
+    static Set<RequestEnrichment> getRequests() {
 
-        awaitRequest();
-        RequestPayload payload = request.getAndSet(null);
+        awaitRequests();
 
-        assertNotNull(payload, "request payload can't be null");
-        System.out.println("- poppedRequest " + counter);
-
-        return payload;
+        return Collections.unmodifiableSet(requests);
     }
 
     /**
@@ -136,13 +132,19 @@ class AssertionHolder {
      * 
      * @param payload verified {@link ResponsePayload} to be obtained by test.
      */
-    static void pushResponse(ResponsePayload payload) {
-        Validate.notNull(payload, "payload can't be null");
-        System.out.println("pushResponse " + counter);
+    static void addResponse(ResponseEnrichment response) {
+        Validate.notNull(response, "response can't be null");
 
-        Object oldResponse = response.getAndSet(payload);
-
-        assertNull(oldResponse, "response must be null when pushing new response");
+        responses.add(response);
+        responsesLatch.countDown();
+    }
+    
+    static void finishEnrichmentRound() {
+        responsesLatch = null;
+        enrichmentAdvertised.set(false);
+        enrichmentFinished.set(false);
+        requests.clear();
+        responses.clear();
     }
 
     /**
@@ -151,25 +153,21 @@ class AssertionHolder {
      * @return the {@link ResponsePayload}
      * @throws ServerResponseTimeoutException when the response wasn't returned in time
      */
-    public static ResponsePayload popResponse() {
-        System.out.println("popResponse");
-        awaitResponse();
-        ResponsePayload payload = response.getAndSet(null);
+    public static Set<ResponseEnrichment> getResponses() {
 
-        assertNotNull(payload, "request payload can't be null");
-        System.out.println("- poppedResponse " + counter);
+        awaitResponses();
 
-        return payload;
+        return Collections.unmodifiableSet(responses);
     }
 
-    private static void awaitRequest() {
-        if (!isAdvertised()) {
+    private static void awaitRequests() {
+        if (!isWaitingForEnriching()) {
             return;
         }
         for (int i = 0; i < NUMBER_OF_WAIT_LOOPS; i++) {
             try {
                 Thread.sleep(THREAD_SLEEP);
-                if (!isAdvertised()) {
+                if (!isEnrichmentAdvertised()) {
                     return;
                 }
             } catch (InterruptedException e) {
@@ -179,21 +177,14 @@ class AssertionHolder {
         throw new SettingRequestTimeoutException();
     }
 
-    private static void awaitResponse() {
-        if (response.get() != null) {
-            return;
-        }
-        for (int i = 0; i < NUMBER_OF_WAIT_LOOPS; i++) {
-            try {
-                Thread.sleep(THREAD_SLEEP);
-                if (response.get() != null) {
-                    return;
-                }
-            } catch (InterruptedException e) {
-
+    private static void awaitResponses() {
+        try {
+            boolean finishedNicely = responsesLatch.await(WAIT_TIMEOUT_MILISECONDS, TimeUnit.MILLISECONDS);
+            if (!finishedNicely) {
+                throw new ServerResponseTimeoutException();
             }
+        } catch (InterruptedException e) {
         }
-        throw new ServerResponseTimeoutException();
     }
 
     public static class SettingRequestTimeoutException extends RuntimeException {
@@ -204,7 +195,7 @@ class AssertionHolder {
         private static final long serialVersionUID = 7267806785171391801L;
     }
 
-    public static class RequestPayloadAlreadySetException extends RuntimeException {
+    public static class RequestEnrichmentAlreadySetException extends RuntimeException {
         private static final long serialVersionUID = 8333157142743791135L;
     }
 }

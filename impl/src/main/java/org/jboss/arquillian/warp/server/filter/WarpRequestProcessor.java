@@ -53,12 +53,20 @@ public class WarpRequestProcessor {
             filterCommand.setRequest(request);
             filterCommand.setResponse(nonWritingResponse);
 
+            System.out.println(request.getServletPath());
             responsePayload = warpRoot.execute(manager, request, filterCommand, serverAssertion);
         } catch (Throwable e) {
+            // TODO log exception properly
+            e.printStackTrace();
             responsePayload = new ResponsePayload(e);
             requestFailed = true;
         }
 
+        
+        if (responsePayload.getThrowable() != null) {
+            responsePayload.getThrowable().printStackTrace();
+        }
+        
         enrichResponse(response, responsePayload);
 
         if (writer != null) {
@@ -71,8 +79,6 @@ public class WarpRequestProcessor {
         if (requestFailed) {
             response.sendError(500);
         }
-
-        return;
     }
 
     private void enrichResponse(HttpServletResponse httpResp, ResponsePayload payload) {

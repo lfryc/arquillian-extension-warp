@@ -80,6 +80,8 @@ public class WarpLifecycle {
 
             return processTestResult(serverAssertion);
         } catch (Exception e) {
+            // TODO log exception
+            e.printStackTrace();
             throw e;
         } finally {
             assertionRegistry.get().unregisterAssertion(serverAssertion);

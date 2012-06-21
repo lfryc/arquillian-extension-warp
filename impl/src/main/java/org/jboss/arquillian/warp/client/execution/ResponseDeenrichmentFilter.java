@@ -43,7 +43,8 @@ public class ResponseDeenrichmentFilter implements HttpFilter {
 
         if (responseEnrichment != null) {
             ResponsePayload payload = SerializationUtils.deserializeFromBase64(responseEnrichment);
-            AssertionHolder.pushResponse(payload);
+            ResponseEnrichment enrichment = new ResponseEnrichment(payload);
+            AssertionHolder.addResponse(enrichment);
         }
 
         return response;

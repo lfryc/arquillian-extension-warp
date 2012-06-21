@@ -31,6 +31,8 @@ import org.jboss.arquillian.drone.api.annotation.Drone;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.warp.ClientAction;
+import org.jboss.arquillian.warp.HttpRequest;
+import org.jboss.arquillian.warp.RequestFilter;
 import org.jboss.arquillian.warp.ServerAssertion;
 import org.jboss.arquillian.warp.Warp;
 import org.jboss.arquillian.warp.WarpTest;
@@ -79,7 +81,7 @@ public class PhaserBasicTest {
             }
         }).verify(new InitialRequestVerification());
 
-        NameChangedToX x = Warp.execute(new ClientAction() {
+        NameChangedToX x = Warp.filter(new JsfRequestFilter()).execute(new ClientAction() {
             public void action() {
                 WebElement nameInput = browser.findElement(By.id("helloWorldJsf:nameInput"));
                 nameInput.sendKeys("X");
@@ -88,6 +90,13 @@ public class PhaserBasicTest {
 
         // verify Object was Deserialized with Server state
         Assert.assertNotNull(x.getUpdatedName());
+    }
+    
+    public static class JsfRequestFilter implements RequestFilter<HttpRequest> {
+        @Override
+        public boolean matches(HttpRequest httpRequest) {
+            return httpRequest.getUri().contains("index.jsf");
+        }
     }
 
     public static class InitialRequestVerification extends LoggingAssertion {

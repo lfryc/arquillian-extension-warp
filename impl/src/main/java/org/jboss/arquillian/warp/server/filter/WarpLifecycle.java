@@ -66,13 +66,14 @@ public class WarpLifecycle {
             ServerAssertion serverAssertion) throws Exception {
         try {
             request.setAttribute(WarpCommons.LIFECYCLE_MANAGER_STORE_REQUEST_ATTRIBUTE, lifecycleManagerStore);
-
+            
             manager.fire(new BeforeSuite());
             manager.fire(new BeforeRequest(request));
 
             lifecycleManagerStore.get().bind(ServletRequest.class, request);
             assertionRegistry.get().registerAssertion(serverAssertion);
             lifecycleManager.get().fireLifecycleEvent(new BeforeServletEvent());
+            
 
             filterCommand.executeFilterChain();
 

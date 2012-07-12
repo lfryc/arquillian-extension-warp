@@ -12,6 +12,8 @@ import org.jboss.arquillian.core.api.annotation.ApplicationScoped;
 import org.jboss.arquillian.core.spi.Manager;
 import org.jboss.arquillian.core.spi.ManagerBuilder;
 import org.jboss.arquillian.warp.ServerAssertion;
+import org.jboss.arquillian.warp.server.enrich.HttpServletRequestEnricher;
+import org.jboss.arquillian.warp.server.enrich.HttpServletResponseEnricher;
 import org.jboss.arquillian.warp.shared.ResponsePayload;
 import org.jboss.arquillian.warp.spi.WarpCommons;
 import org.jboss.arquillian.warp.utils.SerializationUtils;
@@ -52,6 +54,9 @@ public class WarpRequestProcessor {
 
             filterCommand.setRequest(request);
             filterCommand.setResponse(nonWritingResponse);
+            
+            HttpServletRequestEnricher.setRequest(request);
+            HttpServletResponseEnricher.setResponse(response);
 
             responsePayload = warpRoot.execute(manager, request, filterCommand, serverAssertion);
         } catch (Throwable e) {
@@ -59,6 +64,9 @@ public class WarpRequestProcessor {
             e.printStackTrace();
             responsePayload = new ResponsePayload(e);
             requestFailed = true;
+        } finally {
+            HttpServletRequestEnricher.setRequest(null);
+            HttpServletResponseEnricher.setResponse(null);
         }
 
         

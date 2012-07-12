@@ -35,10 +35,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.WebDriverWait;
-
-import com.google.common.base.Function;
 
 /**
  * @author Lukas Fryc
@@ -70,15 +66,9 @@ public class WarpBasicTest {
             }
         }).verify(new InitialRequestAssertion());
 
-        final WebElement sendAjax = new WebDriverWait(browser, 60).until(new Function<WebDriver, WebElement>() {
-            public WebElement apply(WebDriver input) {
-                return browser.findElement(By.id("sendAjax"));
-            }
-        });
-
         Warp.execute(new ClientAction() {
             public void action() {
-                sendAjax.click();
+                browser.findElement(By.id("sendAjax")).click();
             }
         }).verify(new AjaxRequestAssertion());
     }

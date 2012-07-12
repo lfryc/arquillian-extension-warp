@@ -40,9 +40,11 @@ public class RequestEnrichmentFilter implements HttpRequestFilter {
             try {
 
                 Collection<RequestPayload> payloads = getMatchingPayloads(request);
-                RequestPayload assertion = payloads.iterator().next();
-                String requestEnrichment = SerializationUtils.serializeToBase64(assertion);
-                request.setHeader(WarpCommons.ENRICHMENT_REQUEST, Arrays.asList(requestEnrichment));
+                if (!payloads.isEmpty()) {
+                    RequestPayload assertion = payloads.iterator().next();
+                    String requestEnrichment = SerializationUtils.serializeToBase64(assertion);
+                    request.setHeader(WarpCommons.ENRICHMENT_REQUEST, Arrays.asList(requestEnrichment));
+                }
             } catch (Exception originalException) {
                 ClientWarpExecutionException wrappedException = new ClientWarpExecutionException("enriching request failed: "
                         + originalException.getMessage(), originalException);
@@ -54,7 +56,6 @@ public class RequestEnrichmentFilter implements HttpRequestFilter {
     }
 
     private Collection<RequestPayload> getMatchingPayloads(HttpRequest request) {
-
         final Set<RequestEnrichment> requests = AssertionHolder.getRequests();
         final org.jboss.arquillian.warp.HttpRequest httpRequest = new HttpRequestWrapper(request);
         final Collection<RequestPayload> payloads = new LinkedList<RequestPayload>();

@@ -91,7 +91,7 @@ public class PhaserBasicTest {
         // verify Object was Deserialized with Server state
         Assert.assertNotNull(x.getUpdatedName());
     }
-    
+
     public static class JsfRequestFilter implements RequestFilter<HttpRequest> {
         @Override
         public boolean matches(HttpRequest httpRequest) {
@@ -136,14 +136,15 @@ public class PhaserBasicTest {
             return updatedName;
         }
     }
-    
+
     public static class LoggingAssertion extends ServerAssertion {
-        
+
+        private static final long serialVersionUID = 1L;
+
         @BeforeServlet
         public void beforeServlet() {
             System.out.println("before servlet");
         }
-        
 
         @AfterServlet
         public void afterServlet() {

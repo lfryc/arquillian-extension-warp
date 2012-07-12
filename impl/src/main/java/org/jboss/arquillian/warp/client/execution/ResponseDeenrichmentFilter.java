@@ -37,8 +37,6 @@ public class ResponseDeenrichmentFilter implements HttpFilter {
 
     @Override
     public HttpResponse filterResponse(HttpResponse response) {
-        System.out.println("filterResponse " + response.getHeader("Content-Type"));
-
         String responseEnrichment = response.getHeader(WarpCommons.ENRICHMENT_RESPONSE);
 
         if (responseEnrichment != null) {

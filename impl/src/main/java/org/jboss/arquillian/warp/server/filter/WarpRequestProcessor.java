@@ -53,7 +53,6 @@ public class WarpRequestProcessor {
             filterCommand.setRequest(request);
             filterCommand.setResponse(nonWritingResponse);
 
-            System.out.println(request.getServletPath());
             responsePayload = warpRoot.execute(manager, request, filterCommand, serverAssertion);
         } catch (Throwable e) {
             // TODO log exception properly

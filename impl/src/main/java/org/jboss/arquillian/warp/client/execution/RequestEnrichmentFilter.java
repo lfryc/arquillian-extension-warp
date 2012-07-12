@@ -18,7 +18,6 @@ package org.jboss.arquillian.warp.client.execution;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -37,9 +36,7 @@ public class RequestEnrichmentFilter implements HttpRequestFilter {
 
     @Override
     public void filter(HttpRequest request) {
-        System.out.println("filterRequest " + request.getUri());
         if (AssertionHolder.isWaitingForRequests()) {
-            System.out.println("awaiting");
             try {
 
                 Collection<RequestPayload> payloads = getMatchingPayloads(request);

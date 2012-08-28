@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -10,7 +11,7 @@
 
     <artifactId>arquillian-warp-ftest</artifactId>
     <name>Arquillian Warp Extension: Tests</name>
-    
+
     <properties>
         <browser>htmlUnit</browser>
         <remoteReusable>false</remoteReusable>
@@ -21,7 +22,7 @@
             <groupId>org.jboss.spec.javax.servlet</groupId>
             <artifactId>jboss-servlet-api_3.0_spec</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.jboss.arquillian.extension</groupId>
             <artifactId>arquillian-warp-impl</artifactId>
@@ -49,6 +50,12 @@
             <artifactId>arquillian-drone-webdriver-depchain</artifactId>
             <type>pom</type>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.ning</groupId>
+            <artifactId>async-http-client</artifactId>
+            <version>1.7.5</version>
         </dependency>
 
     </dependencies>
@@ -148,21 +155,21 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <profile>
             <id>webdriver-chrome</id>
             <properties>
                 <browser>chrome</browser>
             </properties>
         </profile>
-        
+
         <profile>
             <id>webdriver-firefox</id>
             <properties>
                 <browser>firefox</browser>
             </properties>
         </profile>
-        
+
         <profile>
             <id>webdriver-remote-reusable</id>
             <properties>

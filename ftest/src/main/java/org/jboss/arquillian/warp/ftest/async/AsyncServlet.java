@@ -36,11 +36,13 @@ public class AsyncServlet extends HttpServlet {
     }
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("doPost");
         AsyncContext asyncContext = request.startAsync(request, response);
-        asyncContext.setTimeout(10000L);
+        asyncContext.setTimeout(2000L);
         PostService getService = new PostService(asyncContext);
         asyncContext.addListener(getService);
         executor.execute(getService);
+        System.out.println("doPost end");
     }
 
     @Override

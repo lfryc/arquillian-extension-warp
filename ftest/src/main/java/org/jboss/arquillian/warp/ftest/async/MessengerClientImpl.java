@@ -5,14 +5,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.logging.Logger;
 
 import org.jboss.arquillian.warp.utils.SerializationUtils;
 
 import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.AsyncHttpClientConfig;
 import com.ning.http.client.Response;
 
 public class MessengerClientImpl implements MessengerClient {
 
+    private static Logger log = Logger.getLogger(MessengerClientImpl.class.getName());
+    
     private String url;
     private AsyncHttpClient client = new AsyncHttpClient();
     private ExecutorService executor = Executors.newScheduledThreadPool(10);
@@ -36,7 +40,7 @@ public class MessengerClientImpl implements MessengerClient {
         return executor.submit(new Callable<ServerRunnable>() {
             @Override
             public ServerRunnable call() throws Exception {
-                Future<Response> f = client.preparePut(url).setBody(serialized).execute();
+                Future<Response> f = new AsyncHttpClient().preparePut(url).setBody(serialized).execute();
 
                 Response r = f.get();
                 if (r.getStatusCode() != 200) {
@@ -66,8 +70,18 @@ public class MessengerClientImpl implements MessengerClient {
                 
                 try {
                     while (active) {
+                        log.info("start request");
+                        
                         Future<Response> f = client.preparePost(url).setBody(body).execute();
+                        AsyncHttpClientConfig config = client.getConfig();
+                        
+                        
+                        log.info("request sent");
+                        
                         Response response = f.get();
+                        
+                        log.info("got response");
+                        
                         String serialized = response.getResponseBody();
                         
                         if (!"".equals(serialized)) {

@@ -57,18 +57,20 @@ public class EnrichmentObserver {
     }
 
     public void tryDeenrichResponse(@Observes FilterHttpResponse event) {
+        final HttpRequest request = event.getRequest();
         final HttpResponse response = event.getResponse();
         final ResponseDeenrichmentService service = event.getService();
 
-        if (service.isEnriched(response)) {
-            deenrichHttpResponse.fire(new DeenrichHttpResponse(response, service));
+        if (service.isEnriched(request, response)) {
+            deenrichHttpResponse.fire(new DeenrichHttpResponse(request, response, service));
         }
     }
 
     public void deenrichResponse(@Observes DeenrichHttpResponse event) {
+        final HttpRequest request = event.getRequest();
         final HttpResponse response = event.getResponse();
         final ResponseDeenrichmentService service = event.getService();
 
-        service.deenrichResponse(response);
+        service.deenrichResponse(request, response);
     }
 }

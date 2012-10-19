@@ -17,6 +17,8 @@
 package org.jboss.arquillian.warp.impl.client.execution;
 
 import java.nio.charset.Charset;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.jboss.arquillian.test.spi.TestResult;
 import org.jboss.arquillian.test.spi.TestResult.Status;
@@ -27,19 +29,30 @@ import org.jboss.arquillian.warp.impl.utils.SerializationUtils;
 import org.jboss.arquillian.warp.spi.WarpCommons;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 public class DefaultResponseDeenrichmentService implements ResponseDeenrichmentService {
 
+    private Logger log = Logger.getLogger("Warp");
+
     @Override
-    public boolean isEnriched(HttpResponse response) {
+    public boolean isEnriched(HttpRequest request, HttpResponse response) {
         return getHeader(response) != null;
     }
 
     @Override
-    public void deenrichResponse(HttpResponse response) {
+    public void deenrichResponse(HttpRequest request, HttpResponse response) {
         try {
+            if (System.getProperty("arquillian.debug") != null) {
+                System.out.println("                (W<-) " + request.getUri());
+            }
+
+            if (log.isLoggable(Level.FINE)) {
+                log.fine("Warp response: " + request.getUri());
+            }
+
             final ChannelBuffer content = response.getContent();
 
             long originalLength = HttpHeaders.getContentLength(response);

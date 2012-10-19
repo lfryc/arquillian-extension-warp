@@ -23,7 +23,6 @@ import org.jboss.arquillian.core.api.annotation.Inject;
 import org.jboss.arquillian.core.spi.ServiceLoader;
 import org.jboss.arquillian.warp.impl.client.enrichment.RequestEnrichmentService;
 import org.jboss.arquillian.warp.impl.client.enrichment.ResponseDeenrichmentService;
-import org.littleshoot.proxy.DefaultHttpProxyServer;
 import org.littleshoot.proxy.HttpProxyServer;
 
 /**
@@ -40,16 +39,15 @@ public class DefaultProxyService implements ProxyService<HttpProxyServer> {
     @Override
     public HttpProxyServer startProxy(URL realUrl, URL proxyUrl) {
 
-        RequestEnrichmentFilter requestFilter = serviceLoader().onlyOne(RequestEnrichmentFilter.class);
+        final RequestEnrichmentFilter requestFilter = serviceLoader().onlyOne(RequestEnrichmentFilter.class);
         requestFilter.setEnrichmentService(serviceLoader().onlyOne(RequestEnrichmentService.class));
-        ResponseDeenrichmentFilter responseDeenrichmentFilter = serviceLoader().onlyOne(ResponseDeenrichmentFilter.class);
-        responseDeenrichmentFilter.setDeenrichmentService(serviceLoader().onlyOne(ResponseDeenrichmentService.class));
+
+        final ResponseDeenrichmentFilter responseFilter = serviceLoader().onlyOne(ResponseDeenrichmentFilter.class);
+        responseFilter.setDeenrichmentService(serviceLoader().onlyOne(ResponseDeenrichmentService.class));
 
         String hostPort = realUrl.getHost() + ":" + realUrl.getPort();
-        ResponseFilterMap responseFilterMap = new ResponseFilterMap(hostPort, responseDeenrichmentFilter);
 
-        HttpProxyServer server = new DefaultHttpProxyServer(proxyUrl.getPort(), responseFilterMap, hostPort, null,
-                requestFilter);
+        HttpProxyServer server = new WarpHttpProxyServer(proxyUrl.getPort(), hostPort, requestFilter, responseFilter);
 
         server.start();
 

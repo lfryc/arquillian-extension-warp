@@ -44,7 +44,7 @@ public class DefaultRequestEnrichmentService implements RequestEnrichmentService
     public void enrichRequest(HttpRequest request, Collection<RequestPayload> payloads) {
 
         if (System.getProperty("arquillian.debug") != null) {
-            System.out.println("                (W) " + request.getUri());
+            System.out.println("                (W->) " + request.getUri());
         }
 
         if (log.isLoggable(Level.FINE)) {

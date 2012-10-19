@@ -32,18 +32,18 @@ public class DefaultResponseDeenrichmentFilter implements ResponseDeenrichmentFi
     private ResponseDeenrichmentService deenrichmentService;
 
     @Override
-    public boolean shouldFilterResponses(HttpRequest httpRequest) {
-        return true;
-    }
-
-    @Override
     public int getMaxResponseSize() {
         return Integer.MAX_VALUE;
     }
 
     @Override
-    public HttpResponse filterResponse(HttpResponse response) {
-        tryDeenrichResponse.fire(new FilterHttpResponse(response, deenrichmentService));
+    public boolean filterResponses(HttpRequest httpRequest) {
+        return true;
+    }
+
+    @Override
+    public HttpResponse filterResponse(HttpRequest request, HttpResponse response) {
+        tryDeenrichResponse.fire(new FilterHttpResponse(request, response, deenrichmentService));
 
         return response;
     }
@@ -52,5 +52,4 @@ public class DefaultResponseDeenrichmentFilter implements ResponseDeenrichmentFi
     public void setDeenrichmentService(ResponseDeenrichmentService deenrichmentService) {
         this.deenrichmentService = deenrichmentService;
     }
-
 }
